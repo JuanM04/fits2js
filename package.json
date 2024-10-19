@@ -1,18 +1,17 @@
 {
-  "name": "pkg-placeholder",
+  "name": "fits2js",
   "type": "module",
   "version": "0.0.0",
-  "packageManager": "pnpm@9.9.0",
-  "description": "_description_",
-  "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+  "packageManager": "pnpm@9.12.2",
+  "description": "Read and write FITS files anywhere",
+  "author": "Juan Martín Seery <me@juanm04.com>",
   "license": "MIT",
-  "funding": "https://github.com/sponsors/antfu",
-  "homepage": "https://github.com/antfu/pkg-placeholder#readme",
+  "homepage": "https://github.com/JuanM04/fits2js#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/pkg-placeholder.git"
+    "url": "git+https://github.com/JuanM04/fits2js.git"
   },
-  "bugs": "https://github.com/antfu/pkg-placeholder/issues",
+  "bugs": "https://github.com/JuanM04/fits2js/issues",
   "keywords": [],
   "sideEffects": false,
   "exports": {
