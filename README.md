@@ -8,6 +8,19 @@
 
 Read and write FITS files with JavaScript. This library aims to support standard FITS 4.0 files (see [NASA's website](https://fits.gsfc.nasa.gov/fits_standard.html) or [this copy](./assets/fits_standard40aa-le.pdf)). Works anywhere.
 
+## To-do
+
+> [!CAUTION]
+> This library is under heavy development -- proceed with caution.
+
+- Reader
+  - [x] FITS with just one HDU
+  - [ ] Extensions (see <https://fits.gsfc.nasa.gov/xtension.html>)
+  - [ ] Random-groups structure
+  - [ ] More testing
+- Writer
+  - Yet to implement
+
 ## License
 
 [MIT](./LICENSE) License © 2024-PRESENT [Juan Martín Seery](https://github.com/JuanM04)

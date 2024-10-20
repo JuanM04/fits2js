@@ -46,6 +46,9 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@nrsk/sigma": "^3.8.0"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
     "@types/node": "^22.7.7",
