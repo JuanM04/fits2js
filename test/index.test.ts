@@ -9,6 +9,12 @@ it("test WCOMP01.fits", async () => {
   expect(result).toMatchSnapshot()
 })
 
+it("test WOBJ01.fits", async () => {
+  const file = await readFile(new URL("./WOBJ01.fits", import.meta.url))
+  const result = parseFITS(file.buffer)
+  expect(result).toMatchSnapshot()
+})
+
 it("test EFBTCOMP01.fits", async () => {
   const file = await readFile(new URL("./EFBTCOMP01.fits", import.meta.url))
   const result = parseFITS(file.buffer)
