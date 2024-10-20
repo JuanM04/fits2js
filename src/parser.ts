@@ -355,7 +355,7 @@ export function parseFITS<NAxis extends NAxisRange>(file: ArrayBuffer, forceNaxi
     throw new FITSParserError("MISMATCHED_NAXIS")
   }
 
-  const naxisArray = Array.from({ length: naxis as number }, (_, i) => header.get(`NAXIS${i + 1}`) as number)
+  const naxisArray = Array.from({ length: naxis as number }, (_, i) => header.get(`NAXIS${i + 1}`) as number).reverse()
   if (naxisArray.length !== naxis || naxisArray.some(n => typeof n !== "number")) {
     throw new FITSParserError("NOT_STANDARD")
   }

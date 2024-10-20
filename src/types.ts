@@ -438,8 +438,8 @@ export interface FITSHeaderKeyword {
 }
 
 /**
- * The data of a FITS file. Is a multidimensional array of numbers, where `data[i1][i2]...[iN]` is the value of the
- * data point at coordinates `(i1, i2, ..., iN)`.
+ * The data of a FITS file. Is a multidimensional array of numbers, where `data[iN]...[i2][i1]` is the value of the
+ * data point at coordinates `(iN, ..., i2, i1)`.
  */
 export type FITSData<NAxis extends NAxisRange = NAxisRange> = MultidimensionalArray<number, NAxis>
 
@@ -454,8 +454,8 @@ export interface FITSFile<NAxis extends NAxisRange = NAxisRange> {
   keywords: FITSHeaderKeyword[]
   /**
    * The data of the FITS file, if any. If `NAxis` is `0`, this will be `null`. Otherwise, it will be a
-   * multidimensional array of numbers, where `data[i1][i2]...[iN]` is the value of the data point at coordinates
-   * `(i1, i2, ..., iN)`.
+   * multidimensional array of numbers, where `data[iN]...[i2][i1]` is the value of the data point at coordinates
+   * `(iN, ..., i2, i1)`.
    */
   data: FITSData<NAxis>
 }
