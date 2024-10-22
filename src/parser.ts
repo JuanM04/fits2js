@@ -28,7 +28,7 @@ function fitsstring(): Σ.Parser<string> {
     ),
     ([, [content]]) => {
       const str = content.join("")
-      return str.slice(0, 1) + str.slice(0).trimEnd() // Trim trailing spaces except the first one
+      return str.slice(0, 1) + str.slice(1).trimEnd() // Trim trailing spaces except the first one
     },
   )
 }
