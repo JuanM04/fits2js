@@ -1,3 +1,4 @@
+import type { FITSBITPIX } from "./data.js"
 import { Card, type FITSCardValue } from "./card.js"
 
 interface FITSHeaderParsedResult {
@@ -173,6 +174,10 @@ export class FITSHeader {
   public setValue(keyword: FITSCardString, value: string | undefined, index: number): number
   public setValue(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue | undefined, index: number): number
   public setValue(keyword: string, value: FITSCardValue | undefined, index: number = 0): number {
+    if (keyword === "SIMPLE" || keyword === "CONTINUE" || keyword === "BITPIX" || keyword.startsWith("NAXIS")) {
+      throw new TypeError(`Cannot set value for "${keyword}" keyword`)
+    }
+
     const cards = this.#cards.map((c, i) => [c, i] as const).filter(([card]) => card.keyword === keyword)
     if (cards.length >= index) {
       if (value !== undefined) {
@@ -182,14 +187,50 @@ export class FITSHeader {
       return -1 // No card to remove
     }
 
-    if (value === undefined) {
-      this.#cards.splice(cards[index][1], 1)
-      return index
+    let n = 1
+    while (this.#cards.at(cards[index][1] + n)?.keyword === "CONTINUE") {
+      n++
     }
-    else {
-      this.#cards[cards[index][1]] = Card.fromValue(keyword, value)
-      return index
+    this.#cards.splice(cards[index][1], n)
+
+    if (value !== undefined) {
+      this.#cards.splice(cards[index][1], 0, Card.fromValue(keyword, value))
     }
+    return index
+  }
+
+  /**
+   * Creates a new FITS header overwriting the data type and axes length.
+   *
+   * @param {FITSBITPIX} BITPIX The number of bits per data value.
+   * @param {number[]} axes The number of elements along each axis.
+   * @returns {FITSHeader} The FITS header.
+   */
+  public copyWith(BITPIX: FITSBITPIX, axes: number[]): FITSHeader {
+    if (BITPIX !== 8 && BITPIX !== 16 && BITPIX !== 32 && BITPIX !== 64 && BITPIX !== -32 && BITPIX !== -64) {
+      throw new TypeError(`Unexpected BITPIX value: ${BITPIX}`)
+    }
+    for (let i = 0; i < axes.length; i++) {
+      const value = axes[i]
+      if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+        throw new TypeError(`Unexpected NAXIS${i + 1} value: ${value}`)
+      }
+    }
+
+    const cards = [
+      Card.fromValue("SIMPLE", true, "Fits standard"),
+      Card.fromValue("BITPIX", BITPIX, "Bits per pixel"),
+      Card.fromValue("NAXIS", axes.length, "Number of axes"),
+      ...axes.map((value, i) => Card.fromValue(`NAXIS${i + 1}`, value, "Axis length")),
+    ]
+
+    for (const card of this.#cards) {
+      if (card.keyword !== "SIMPLE" && card.keyword !== "BITPIX" && !card.keyword.startsWith("NAXIS")) {
+        cards.push(structuredClone(card))
+      }
+    }
+
+    return new FITSHeader(cards)
   }
 
   public toJSON(): unknown {
@@ -203,6 +244,27 @@ export class FITSHeader {
       }
     }
     return Object.fromEntries(map)
+  }
+
+  /**
+   * Converts the FITS header to an ArrayBuffer.
+   */
+  public toBuffer(): ArrayBuffer {
+    const cards = [...this.#cards, Card.fromValue("END", null)]
+    const ascii = new TextEncoder()
+    const buffer = new ArrayBuffer(cards.length * Card.LENGTH)
+    const view = new DataView(buffer)
+
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i]
+      const record = card.image
+      const recordBuffer = ascii.encode(record)
+      for (let j = 0; j < recordBuffer.byteLength; j++) {
+        view.setUint8(i * Card.LENGTH + j, recordBuffer[j])
+      }
+    }
+
+    return buffer
   }
 
   /**
@@ -277,5 +339,16 @@ export class FITSHeader {
     }
 
     return { header, bytesRead: offset }
+  }
+
+  /**
+   * Creates a new FITS header. It will contain the mandatory headers SIMPLE, BITPIX, and NAXIS.
+   *
+   * @param {FITSBITPIX} BITPIX The number of bits per data value.
+   * @param {number[]} axes The number of elements along each axis.
+   * @returns {FITSHeader} The FITS header.
+   */
+  static basic(BITPIX: FITSBITPIX, axes: number[]): FITSHeader {
+    return new FITSHeader([]).copyWith(BITPIX, axes)
   }
 }

@@ -75,7 +75,7 @@ export class FITSData {
 
   /**
    * Returns one of the data points in HDU. The coordinates are 1-based
-   * and are specified in the order of the axes `(n1, n2, ..., naxis)`.
+   * and are specified in the order of the axes `(n1, n2, ..., nNAXIS)`.
    *
    * @param {...number} coords The coordinates of the data point.
    * @returns {number} The value of the data point.
@@ -106,7 +106,7 @@ export class FITSData {
 
   /**
    * Returns all the data of the HDU as a generator. The coordinates are 1-based and are specified in the order
-   * of the axes `(n1, n2, ..., naxis)`.
+   * of the axes `(n1, n2, ..., nNAXIS)`.
    * @returns A generator that yields the coordinates and the value of each data point.
    */
   public *getData(): Generator<{ coordinates: number[], value: number }, void, unknown> {
@@ -140,5 +140,55 @@ export class FITSData {
 
   public toJSON(): unknown {
     return Array.from(this.getData()).map(({ value }) => value)
+  }
+
+  public toBuffer(): ArrayBuffer {
+    return structuredClone(this.#dataBuffer)
+  }
+
+  /**
+   * Creates a new FITS data unit.
+   *
+   * **Warning**: This method does not check if BITPIX and NAXIS are valid, only checks the data.
+   * It's intended to be called by {@link FITS}.
+   *
+   * @param {number[]} data The data of the FITS file.
+   * @param {BITPIX} BITPIX The bits per pixel of the data.
+   * @param {number[]} axes The axes of the data matrix.
+   * @returns {FITSData} The data of the FITS file.
+   */
+  public static fromArray(data: number[], BITPIX: FITSBITPIX, axes: number[]): FITSData {
+    const points = axes.reduce((accum, len) => accum * len, 1)
+    if (data.length !== points) {
+      throw new RangeError(`Expected ${points} data points, but got ${data.length}`)
+    }
+
+    const dataBuffer = new ArrayBuffer(points * Math.abs(BITPIX) / 8)
+    const dataView = new DataView(dataBuffer)
+    for (const point of data) {
+      switch (BITPIX) {
+        case 8:
+          dataView.setInt8(dataView.byteLength, point)
+          break
+        case 16:
+          dataView.setInt16(dataView.byteLength, point, false)
+          break
+        case 32:
+          dataView.setInt32(dataView.byteLength, point, false)
+          break
+        case 64:
+          throw new TypeError("64-bit integers are not supported")
+        case -32:
+          dataView.setFloat32(dataView.byteLength, point, false)
+          break
+        case -64:
+          dataView.setFloat64(dataView.byteLength, point, false)
+          break
+        default:
+          throw new TypeError(`Unexpected BITPIX value ${BITPIX}`)
+      }
+    }
+
+    return new FITSData({ BITPIX, NAXIS: axes.length, NAXISn: axes, dataBuffer })
   }
 }

@@ -19,7 +19,7 @@ Read and write FITS files with JavaScript. This library aims to support standard
   - [ ] Random-groups structure
   - [ ] More testing
 - Writer
-  - Yet to implement
+  - Somewhat implemented
 
 ## License
 
