@@ -1,7 +1,7 @@
 {
   "name": "fits2js",
   "type": "module",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "packageManager": "pnpm@9.12.2",
   "description": "Read and write FITS files anywhere",
   "author": "Juan Martín Seery <me@juanm04.com>",
