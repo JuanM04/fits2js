@@ -574,56 +574,159 @@ exports[`test EFBTCOMP01.fits 1`] = `
     20825.1484375,
   ],
   "header": {
-    "AIRMASS": 1.33,
-    "APNUM1": "1 1 152.29 160.92",
-    "BANDID1": "spectrum - background none, weights none, clean no",
-    "BIASSEC": "[1:364,1:569]",
-    "BITPIX": -32,
-    "CCDPROC": "May 31 22:09 CCD processing done",
-    "CCDSEC": "[4:367,4:572]",
-    "CD1_1": 1,
-    "CDELT1": 1,
-    "CRPIX1": 1,
-    "CRVAL1": 4,
-    "CTYPE1": "PIXEL",
-    "DATE": "2023-06-01T02:07:49",
-    "DATE-OBS": "2023-05-31",
-    "DEC": "+00:36:38.5",
-    "DEC2000": "+00:42:29.8",
-    "DETECTOR": "TH 7883",
-    "EQUINOX": 2023.4,
-    "EXPTIME": 120,
-    "EXTEND": false,
-    "FLATCOR": "May 31 22:09 Flat field image is NFlat.fits with scale=1.",
-    "GAIN": 3.9,
-    "HA": "+01:49:33.7",
-    "IMAGETYP": "comp",
-    "INSTRUME": "Boller & Chivens + PM512",
-    "IRAF-TLM": "2023-06-01T02:21:21",
-    "LTM1_1": 1,
-    "MJD-OBS": 60095.194306,
-    "NAXIS": 1,
-    "NAXIS1": 569,
-    "OBJECT": " ",
-    "OBSERVAT": "CASLEO",
-    "OBSERVER": "Aidelman, Yael Judith",
-    "ORIGIN": "NOAO-IRAF FITS Image Kernel July 2003",
-    "PROG-ID": "JS-2023A-06",
-    "RA": "14:46:44.8",
-    "RA2000": "14:45:33.1",
-    "RDNOISE": 4.6,
-    "REFSPEC1": "EFBTCOMP01",
-    "SIMPLE": true,
-    "ST": "16:36:18.5",
-    "TELESCOP": "2.15m",
-    "TIME-OBS": "04:39:48.2",
-    "TRIM": "May 31 21:58 Trim data section is [4:367,4:572]",
-    "UT": "04:39:48.2",
-    "WAT0_001": "system=equispec",
-    "WAT1_001": "wtype=linear label=Pixel",
-    "WCSDIM": 1,
-    "ZD": 41.5,
-    "ZEROCOR": "May 31 22:06 Zero level correction image is Zero.fits",
+    "AIRMASS": [
+      1.33,
+    ],
+    "APNUM1": [
+      "1 1 152.29 160.92",
+    ],
+    "BANDID1": [
+      "spectrum - background none, weights none, clean no",
+    ],
+    "BIASSEC": [
+      "[1:364,1:569]",
+    ],
+    "BITPIX": [
+      -32,
+    ],
+    "CCDPROC": [
+      "May 31 22:09 CCD processing done",
+    ],
+    "CCDSEC": [
+      "[4:367,4:572]",
+    ],
+    "CD1_1": [
+      1,
+    ],
+    "CDELT1": [
+      1,
+    ],
+    "COMMENT": [
+      "'Red 080 -600 l/mm Ang 7 40 Ran 250 Decker 8 StellaCam '",
+    ],
+    "CRPIX1": [
+      1,
+    ],
+    "CRVAL1": [
+      4,
+    ],
+    "CTYPE1": [
+      "PIXEL",
+    ],
+    "DATE": [
+      "2023-06-01T02:07:49",
+    ],
+    "DATE-OBS": [
+      "2023-05-31",
+    ],
+    "DEC": [
+      "+00:36:38.5",
+    ],
+    "DEC2000": [
+      "+00:42:29.8",
+    ],
+    "DETECTOR": [
+      "TH 7883",
+    ],
+    "EQUINOX": [
+      2023.4,
+    ],
+    "EXPTIME": [
+      120,
+    ],
+    "EXTEND": [
+      false,
+    ],
+    "FLATCOR": [
+      "May 31 22:09 Flat field image is NFlat.fits with scale=1.",
+    ],
+    "GAIN": [
+      3.9,
+    ],
+    "HA": [
+      "+01:49:33.7",
+    ],
+    "IMAGETYP": [
+      "comp",
+    ],
+    "INSTRUME": [
+      "Boller & Chivens + PM512",
+    ],
+    "IRAF-TLM": [
+      "2023-06-01T02:21:21",
+    ],
+    "LTM1_1": [
+      1,
+    ],
+    "MJD-OBS": [
+      60095.194306,
+    ],
+    "NAXIS": [
+      1,
+    ],
+    "NAXIS1": [
+      569,
+    ],
+    "OBJECT": [
+      "",
+    ],
+    "OBSERVAT": [
+      "CASLEO",
+    ],
+    "OBSERVER": [
+      "Aidelman, Yael Judith",
+    ],
+    "ORIGIN": [
+      "NOAO-IRAF FITS Image Kernel July 2003",
+    ],
+    "PROG-ID": [
+      "JS-2023A-06",
+    ],
+    "RA": [
+      "14:46:44.8",
+    ],
+    "RA2000": [
+      "14:45:33.1",
+    ],
+    "RDNOISE": [
+      4.6,
+    ],
+    "REFSPEC1": [
+      "EFBTCOMP01",
+    ],
+    "SIMPLE": [
+      true,
+    ],
+    "ST": [
+      "16:36:18.5",
+    ],
+    "TELESCOP": [
+      "2.15m",
+    ],
+    "TIME-OBS": [
+      "04:39:48.2",
+    ],
+    "TRIM": [
+      "May 31 21:58 Trim data section is [4:367,4:572]",
+    ],
+    "UT": [
+      "04:39:48.2",
+    ],
+    "WAT0_001": [
+      "system=equispec",
+    ],
+    "WAT1_001": [
+      "wtype=linear label=Pixel",
+    ],
+    "WCSDIM": [
+      1,
+    ],
+    "ZD": [
+      41.5,
+    ],
+    "ZEROCOR": [
+      "May 31 22:06 Zero level correction image is Zero.fits",
+    ],
   },
 }
 `;
@@ -1202,57 +1305,162 @@ exports[`test WCOMP01.fits 1`] = `
     20610.197265625,
   ],
   "header": {
-    "AIRMASS": 1.13,
-    "APNUM1": "1 1 143.87 151.91",
-    "BANDID1": "spectrum - background none, weights none, clean no",
-    "BIASSEC": "[1:364,1:569]",
-    "BITPIX": -32,
-    "CCDPROC": "Aug  5 20:28 CCD processing done",
-    "CCDSEC": "[4:367,4:572]",
-    "CD1_1": 2.6098145928362,
-    "CDELT1": 2.6098145928362,
-    "CRPIX1": 1,
-    "CRVAL1": 3441.5935896,
-    "CTYPE1": "LINEAR",
-    "DATE": "2023-08-22T16:50:45",
-    "DATE-OBS": "2023-06-01",
-    "DC-FLAG": 0,
-    "DCLOG1": "REFSPEC1 = EFBTCOMP01",
-    "DEC": "-56:09:15.1",
-    "DEC2000": "-56:02:31.3",
-    "DETECTOR": "TH 7883",
-    "EQUINOX": 2023.4,
-    "EXPTIME": 120,
-    "EXTEND": false,
-    "FLATCOR": "Aug  5 20:28 Flat field image is NFlat.fits with scale=1.",
-    "GAIN": 3.9,
-    "HA": "+01:15:33.1",
-    "IMAGETYP": "comp",
-    "INSTRUME": "Boller & Chivens",
-    "IRAF-TLM": "2023-08-22T16:50:45",
-    "LTM1_1": 1,
-    "MJD-OBS": 60096.965174,
-    "NAXIS": 1,
-    "NAXIS1": 569,
-    "OBJECT": " ",
-    "OBSERVAT": "CASLEO",
-    "OBSERVER": "Aidelman, Yael Judith",
-    "ORIGIN": "NOAO-IRAF FITS Image Kernel July 2003",
-    "PROG-ID": "JS-2023A-06",
-    "RA": "09:57:54.1",
-    "RA2000": "09:57:05.8",
-    "RDNOISE": 4.6,
-    "SIMPLE": true,
-    "ST": "11:13:27.3",
-    "TELESCOP": "2.15m",
-    "TIME-OBS": "23:09:51.6",
-    "TRIM": "Aug  5 20:06 Trim data section is [4:367,4:572]",
-    "UT": "23:09:51.6",
-    "WAT0_001": "system=equispec",
-    "WAT1_001": "wtype=linear label=Wavelength units=angstroms",
-    "WCSDIM": 1,
-    "ZD": 27.7,
-    "ZEROCOR": "Aug  5 20:13 Zero level correction image is Zero.fits",
+    "AIRMASS": [
+      1.13,
+    ],
+    "APNUM1": [
+      "1 1 143.87 151.91",
+    ],
+    "BANDID1": [
+      "spectrum - background none, weights none, clean no",
+    ],
+    "BIASSEC": [
+      "[1:364,1:569]",
+    ],
+    "BITPIX": [
+      -32,
+    ],
+    "CCDPROC": [
+      "Aug  5 20:28 CCD processing done",
+    ],
+    "CCDSEC": [
+      "[4:367,4:572]",
+    ],
+    "CD1_1": [
+      2.6098145928362,
+    ],
+    "CDELT1": [
+      2.6098145928362,
+    ],
+    "COMMENT": [
+      "'Red 080 -600 l/mm Ang 7 40 Ran 250 Decker 8 StellaCam '",
+    ],
+    "CRPIX1": [
+      1,
+    ],
+    "CRVAL1": [
+      3441.005935896,
+    ],
+    "CTYPE1": [
+      "LINEAR",
+    ],
+    "DATE": [
+      "2023-08-22T16:50:45",
+    ],
+    "DATE-OBS": [
+      "2023-06-01",
+    ],
+    "DC-FLAG": [
+      0,
+    ],
+    "DCLOG1": [
+      "REFSPEC1 = EFBTCOMP01",
+    ],
+    "DEC": [
+      "-56:09:15.1",
+    ],
+    "DEC2000": [
+      "-56:02:31.3",
+    ],
+    "DETECTOR": [
+      "TH 7883",
+    ],
+    "EQUINOX": [
+      2023.4,
+    ],
+    "EXPTIME": [
+      120,
+    ],
+    "EXTEND": [
+      false,
+    ],
+    "FLATCOR": [
+      "Aug  5 20:28 Flat field image is NFlat.fits with scale=1.",
+    ],
+    "GAIN": [
+      3.9,
+    ],
+    "HA": [
+      "+01:15:33.1",
+    ],
+    "IMAGETYP": [
+      "comp",
+    ],
+    "INSTRUME": [
+      "Boller & Chivens",
+    ],
+    "IRAF-TLM": [
+      "2023-08-22T16:50:45",
+    ],
+    "LTM1_1": [
+      1,
+    ],
+    "MJD-OBS": [
+      60096.965174,
+    ],
+    "NAXIS": [
+      1,
+    ],
+    "NAXIS1": [
+      569,
+    ],
+    "OBJECT": [
+      "",
+    ],
+    "OBSERVAT": [
+      "CASLEO",
+    ],
+    "OBSERVER": [
+      "Aidelman, Yael Judith",
+    ],
+    "ORIGIN": [
+      "NOAO-IRAF FITS Image Kernel July 2003",
+    ],
+    "PROG-ID": [
+      "JS-2023A-06",
+    ],
+    "RA": [
+      "09:57:54.1",
+    ],
+    "RA2000": [
+      "09:57:05.8",
+    ],
+    "RDNOISE": [
+      4.6,
+    ],
+    "SIMPLE": [
+      true,
+    ],
+    "ST": [
+      "11:13:27.3",
+    ],
+    "TELESCOP": [
+      "2.15m",
+    ],
+    "TIME-OBS": [
+      "23:09:51.6",
+    ],
+    "TRIM": [
+      "Aug  5 20:06 Trim data section is [4:367,4:572]",
+    ],
+    "UT": [
+      "23:09:51.6",
+    ],
+    "WAT0_001": [
+      "system=equispec",
+    ],
+    "WAT1_001": [
+      "wtype=linear label=Wavelength units=angstroms",
+    ],
+    "WCSDIM": [
+      1,
+    ],
+    "ZD": [
+      27.7,
+    ],
+    "ZEROCOR": [
+      "Aug  5 20:13 Zero level correction image is Zero.fits",
+    ],
   },
 }
 `;
@@ -3538,69 +3746,198 @@ exports[`test WOBJ01.fits 1`] = `
     78.68582916259766,
   ],
   "header": {
-    "AIRMASS": 1.13,
-    "APNUM1": "1 1 144.03 152.67",
-    "BANDID1": "spectrum - background fit, weights variance, clean no",
-    "BANDID2": "raw - background fit, weights none, clean no",
-    "BANDID3": "background - background fit",
-    "BANDID4": "sigma - background fit, weights variance, clean no",
-    "BIASSEC": "[1:364,1:569]",
-    "BITPIX": -32,
-    "CCDPROC": "Jun  1 20:45 CCD processing done",
-    "CCDSEC": "[4:367,4:572]",
-    "CD1_1": 2.610043257179,
-    "CD2_2": 1,
-    "CD3_3": 1,
-    "CRPIX1": 1,
-    "CRVAL1": 3440.9027036577,
-    "CTYPE1": "LINEAR",
-    "CTYPE2": "LINEAR",
-    "CTYPE3": "LINEAR",
-    "DATE": "2023-06-02T01:22:16",
-    "DATE-OBS": "2023-05-31",
-    "DC-FLAG": 0,
-    "DCLOG1": "REFSPEC1 = EFBTCOMP01",
-    "DEC": "-56:09:13.7",
-    "DEC2000": "-56:02:29.9",
-    "DETECTOR": "TH 7883",
-    "EQUINOX": 2023.4,
-    "EXPTIME": 900,
-    "EXTEND": false,
-    "FLATCOR": "Jun  1 20:45 Flat field image is NFlat.fits with scale=1.",
-    "GAIN": 3.9,
-    "HA": "+01:20:43.4",
-    "IMAGETYP": "object",
-    "INSTRUME": "Boller & Chivens",
-    "IRAF-TLM": "2023-06-02T01:22:16",
-    "LTM1_1": 1,
-    "LTM2_2": 1,
-    "LTM3_3": 1,
-    "MJD-OBS": 60095.971539,
-    "NAXIS": 3,
-    "NAXIS1": 569,
-    "NAXIS2": 1,
-    "NAXIS3": 4,
-    "OBJECT": "HD86490",
-    "OBSERVAT": "CASLEO",
-    "OBSERVER": "Aidelman, Yael Judith",
-    "ORIGIN": "NOAO-IRAF FITS Image Kernel July 2003",
-    "PROG-ID": "JS-2023A-06",
-    "RA": "09:57:52.0",
-    "RA2000": "09:57:03.8",
-    "RDNOISE": 4.6,
-    "SIMPLE": true,
-    "ST": "11:18:35.5",
-    "TELESCOP": "2.15m",
-    "TIME-OBS": "23:19:01.5",
-    "TRIM": "Jun  1 20:36 Trim data section is [4:367,4:572]",
-    "UT": "23:19:01.5",
-    "WAT0_001": "system=equispec",
-    "WAT1_001": "wtype=linear label=Wavelength units=angstroms",
-    "WAT2_001": "wtype=linear",
-    "WAT3_001": "wtype=linear",
-    "WCSDIM": 3,
-    "ZD": 28.1,
-    "ZEROCOR": "Jun  1 20:40 Zero level correction image is Zero.fits",
+    "AIRMASS": [
+      1.13,
+    ],
+    "APNUM1": [
+      "1 1 144.03 152.67",
+    ],
+    "BANDID1": [
+      "spectrum - background fit, weights variance, clean no",
+    ],
+    "BANDID2": [
+      "raw - background fit, weights none, clean no",
+    ],
+    "BANDID3": [
+      "background - background fit",
+    ],
+    "BANDID4": [
+      "sigma - background fit, weights variance, clean no",
+    ],
+    "BIASSEC": [
+      "[1:364,1:569]",
+    ],
+    "BITPIX": [
+      -32,
+    ],
+    "CCDPROC": [
+      "Jun  1 20:45 CCD processing done",
+    ],
+    "CCDSEC": [
+      "[4:367,4:572]",
+    ],
+    "CD1_1": [
+      2.610043257179,
+    ],
+    "CD2_2": [
+      1,
+    ],
+    "CD3_3": [
+      1,
+    ],
+    "COMMENT": [
+      "'Red 080 -600 l/mm Ang 7 40 Ran 250 Decker 8 StellaCam '",
+    ],
+    "CRPIX1": [
+      1,
+    ],
+    "CRVAL1": [
+      3440.9027036577,
+    ],
+    "CTYPE1": [
+      "LINEAR",
+    ],
+    "CTYPE2": [
+      "LINEAR",
+    ],
+    "CTYPE3": [
+      "LINEAR",
+    ],
+    "DATE": [
+      "2023-06-02T01:22:16",
+    ],
+    "DATE-OBS": [
+      "2023-05-31",
+    ],
+    "DC-FLAG": [
+      0,
+    ],
+    "DCLOG1": [
+      "REFSPEC1 = EFBTCOMP01",
+    ],
+    "DEC": [
+      "-56:09:13.7",
+    ],
+    "DEC2000": [
+      "-56:02:29.9",
+    ],
+    "DETECTOR": [
+      "TH 7883",
+    ],
+    "EQUINOX": [
+      2023.4,
+    ],
+    "EXPTIME": [
+      900,
+    ],
+    "EXTEND": [
+      false,
+    ],
+    "FLATCOR": [
+      "Jun  1 20:45 Flat field image is NFlat.fits with scale=1.",
+    ],
+    "GAIN": [
+      3.9,
+    ],
+    "HA": [
+      "+01:20:43.4",
+    ],
+    "IMAGETYP": [
+      "object",
+    ],
+    "INSTRUME": [
+      "Boller & Chivens",
+    ],
+    "IRAF-TLM": [
+      "2023-06-02T01:22:16",
+    ],
+    "LTM1_1": [
+      1,
+    ],
+    "LTM2_2": [
+      1,
+    ],
+    "LTM3_3": [
+      1,
+    ],
+    "MJD-OBS": [
+      60095.971539,
+    ],
+    "NAXIS": [
+      3,
+    ],
+    "NAXIS1": [
+      569,
+    ],
+    "NAXIS2": [
+      1,
+    ],
+    "NAXIS3": [
+      4,
+    ],
+    "OBJECT": [
+      "HD86490",
+    ],
+    "OBSERVAT": [
+      "CASLEO",
+    ],
+    "OBSERVER": [
+      "Aidelman, Yael Judith",
+    ],
+    "ORIGIN": [
+      "NOAO-IRAF FITS Image Kernel July 2003",
+    ],
+    "PROG-ID": [
+      "JS-2023A-06",
+    ],
+    "RA": [
+      "09:57:52.0",
+    ],
+    "RA2000": [
+      "09:57:03.8",
+    ],
+    "RDNOISE": [
+      4.6,
+    ],
+    "SIMPLE": [
+      true,
+    ],
+    "ST": [
+      "11:18:35.5",
+    ],
+    "TELESCOP": [
+      "2.15m",
+    ],
+    "TIME-OBS": [
+      "23:19:01.5",
+    ],
+    "TRIM": [
+      "Jun  1 20:36 Trim data section is [4:367,4:572]",
+    ],
+    "UT": [
+      "23:19:01.5",
+    ],
+    "WAT0_001": [
+      "system=equispec",
+    ],
+    "WAT1_001": [
+      "wtype=linear label=Wavelength units=angstroms",
+    ],
+    "WAT2_001": [
+      "wtype=linear",
+    ],
+    "WAT3_001": [
+      "wtype=linear",
+    ],
+    "WCSDIM": [
+      3,
+    ],
+    "ZD": [
+      28.1,
+    ],
+    "ZEROCOR": [
+      "Jun  1 20:40 Zero level correction image is Zero.fits",
+    ],
   },
 }
 `;
