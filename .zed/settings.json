@@ -1,0 +1,46 @@
+{
+  "languages": {
+    "JavaScript": {
+      "formatter": { "language_server": { "name": "eslint" } },
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true,
+        "source.organizeImports": false,
+      },
+    },
+    "TypeScript": {
+      "formatter": { "language_server": { "name": "eslint" } },
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true,
+        "source.organizeImports": false,
+      },
+    },
+    "JSON": {
+      "formatter": { "language_server": { "name": "eslint" } },
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true,
+        "source.organizeImports": false,
+      },
+    },
+    "JSONC": {
+      "formatter": { "language_server": { "name": "eslint" } },
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true,
+        "source.organizeImports": false,
+      },
+    },
+    "YAML": {
+      "formatter": { "language_server": { "name": "eslint" } },
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true,
+        "source.organizeImports": false,
+      },
+    },
+    "Markdown": {
+      "formatter": { "language_server": { "name": "eslint" } },
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true,
+        "source.organizeImports": false,
+      },
+    },
+  },
+}
