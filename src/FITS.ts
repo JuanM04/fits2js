@@ -1,7 +1,8 @@
-import { type FITSBITPIX, FITSData } from "./data.js"
+import type { FITSBITPIX } from "./data.js"
+import { FITSData } from "./data.js"
 import { FITSHeader } from "./header.js"
 
-const BLOCK_SIZE = 2880
+export const BLOCK_SIZE = 2880
 
 // Standard FITS header keywords
 
@@ -28,7 +29,7 @@ export class FITS {
     const headerBuffer = this.header.toBuffer()
     const dataBuffer = this.data.toBuffer()
 
-    const headerLength = Math.ceil(headerBuffer.byteLength / BLOCK_SIZE) * BLOCK_SIZE
+    const headerLength = headerBuffer.byteLength // Already padded to BLOCK_SIZE
     const dataLength = Math.ceil(dataBuffer.byteLength / BLOCK_SIZE) * BLOCK_SIZE
     const totalLength = headerLength + dataLength
 
@@ -39,16 +40,13 @@ export class FITS {
     for (let i = 0; i < headerBuffer.byteLength; i++) {
       view.setUint8(i, headerView.getUint8(i))
     }
-    for (let i = headerBuffer.byteLength; i < headerLength; i++) {
-      view.setUint8(i, 32) // ASCII space
-    }
 
     const dataView = new DataView(dataBuffer)
     for (let i = 0; i < dataBuffer.byteLength; i++) {
       view.setUint8(headerLength + i, dataView.getUint8(i))
     }
     for (let i = dataBuffer.byteLength; i < dataLength; i++) {
-      view.setUint8(headerLength + i, 0)
+      view.setUint8(headerLength + i, 0) // Pad with nulls
     }
 
     return buffer
@@ -106,7 +104,7 @@ export class FITS {
    *
    *
    * @param {number[]} points The points of the FITS file.
-   * @param {BITPIX} BITPIX The bits per point of the data.
+   * @param {BITPIX | FITSBITPIXAlias} BITPIX The bits per point of the data.
    * @param {number[]} axes The axes of the data matrix.
    * @param {FITSHeader} [copyHeader] The header to copy from.
    * @returns {FITS} The header and data of the FITS file.

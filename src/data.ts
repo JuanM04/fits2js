@@ -1,5 +1,15 @@
 export type FITSBITPIX = 8 | 16 | 32 | 64 | -32 | -64
 
+export const FITSBITPIX_ALIAS = {
+  CHAR: 8,
+  UINT8: 8,
+  INT16: 16,
+  INT32: 32,
+  INT64: 64,
+  FLOAT32: -32,
+  FLOAT64: -64,
+} as const satisfies Record<string, FITSBITPIX>
+
 interface FITSDataContructorOptions {
   BITPIX: FITSBITPIX
   NAXIS: number
@@ -109,7 +119,7 @@ export class FITSData {
    * of the axes `(n1, n2, ..., nNAXIS)`.
    * @returns A generator that yields the coordinates and the value of each data point.
    */
-  public *getData(): Generator<{ coordinates: number[], value: number }, void, unknown> {
+  public* getData(): Generator<{ coordinates: number[], value: number }, void, unknown> {
     if (this.NAXIS === 0) {
       return
     }
@@ -163,30 +173,33 @@ export class FITSData {
       throw new RangeError(`Expected ${points} data points, but got ${data.length}`)
     }
 
-    const dataBuffer = new ArrayBuffer(points * Math.abs(BITPIX) / 8)
+    const bytesPerPoint = Math.abs(BITPIX) / 8
+    const dataBuffer = new ArrayBuffer(points * bytesPerPoint)
     const dataView = new DataView(dataBuffer)
+    let offset = dataView.byteOffset
     for (const point of data) {
       switch (BITPIX) {
         case 8:
-          dataView.setInt8(dataView.byteLength, point)
+          dataView.setInt8(offset, point)
           break
         case 16:
-          dataView.setInt16(dataView.byteLength, point, false)
+          dataView.setInt16(offset, point, false)
           break
         case 32:
-          dataView.setInt32(dataView.byteLength, point, false)
+          dataView.setInt32(offset, point, false)
           break
         case 64:
           throw new TypeError("64-bit integers are not supported")
         case -32:
-          dataView.setFloat32(dataView.byteLength, point, false)
+          dataView.setFloat32(offset, point, false)
           break
         case -64:
-          dataView.setFloat64(dataView.byteLength, point, false)
+          dataView.setFloat64(offset, point, false)
           break
         default:
           throw new TypeError(`Unexpected BITPIX value ${BITPIX}`)
       }
+      offset += bytesPerPoint
     }
 
     return new FITSData({ BITPIX, NAXIS: axes.length, NAXISn: axes, dataBuffer })

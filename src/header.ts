@@ -1,5 +1,7 @@
+import type { FITSCardValue } from "./card.js"
 import type { FITSBITPIX } from "./data.js"
-import { Card, type FITSCardValue } from "./card.js"
+import { Card, keywordIsCommentary } from "./card.js"
+import { BLOCK_SIZE } from "./FITS.js"
 
 interface FITSHeaderParsedResult {
   header: FITSHeader
@@ -8,72 +10,72 @@ interface FITSHeaderParsedResult {
 
 // Card types
 
-export type FITSCardInteger =
-  | "BITPIX"
-  | "BLANK"
-  | "EXTLEVEL"
-  | "EXTVER"
-  | "GCOUNT"
-  | `NAXIS${"" | number}`
-  | "PCOUNT"
-  | `TBCOL${number}`
-  | "TFIELDS"
-  | "THEAP"
+export type FITSCardInteger
+  = | "BITPIX"
+    | "BLANK"
+    | "EXTLEVEL"
+    | "EXTVER"
+    | "GCOUNT"
+    | `NAXIS${"" | number}`
+    | "PCOUNT"
+    | `TBCOL${number}`
+    | "TFIELDS"
+    | "THEAP"
 const fitsCardIntegerRegExp = /^BITPIX|BLANK|EXTLEVEL|EXTVER|GCOUNT|NAXIS\d{0,3}|PCOUNT|TBCOL\d{1,3}|TFIELDS|THEAP$/g
 export function isFITSCardInteger(keyword: string): keyword is FITSCardInteger {
   return fitsCardIntegerRegExp.test(keyword)
 }
 
-export type FITSCardReal =
-  | "BSCALE"
-  | "BZERO"
-  | `CDELT${number}`
-  | `CROTA${number}`
-  | `CRPIX${number}`
-  | `CRVAL${number}`
-  | "DATAMAX"
-  | "DATAMIN"
-  | "EPOCH"
-  | "EQUINOX"
-  | `PSCAL${number}`
-  | `PZERO${number}`
-  | `TSCAL${number}`
-  | `TZERO${number}`
+export type FITSCardReal
+  = | "BSCALE"
+    | "BZERO"
+    | `CDELT${number}`
+    | `CROTA${number}`
+    | `CRPIX${number}`
+    | `CRVAL${number}`
+    | "DATAMAX"
+    | "DATAMIN"
+    | "EPOCH"
+    | "EQUINOX"
+    | `PSCAL${number}`
+    | `PZERO${number}`
+    | `TSCAL${number}`
+    | `TZERO${number}`
 const fitsCardRealRegExp = /^BSCALE|BZERO|CDELT\d{1,3}|CROTA\d{1,3}|CRPIX\d{1,3}|CRVAL\d{1,3}|DATAMAX|DATAMIN|EPOCH|EQUINOX|PSCAL\d{1,3}|PZERO\d{1,3}|TSCAL\d{1,3}|TZERO\d{1,3}$/g
 export function isFITSCardReal(keyword: string): keyword is FITSCardReal {
   return fitsCardRealRegExp.test(keyword)
 }
 
-export type FITSCardString =
-  | "AUTHOR"
-  | "BUNIT"
-  | `CTYPE${number}`
-  | `DATE${string}`
-  | "EXTNAME"
-  | "INSTRUME"
-  | "OBJECT"
-  | "OBSERVER"
-  | "ORIGIN"
-  | `PTYPE${number}`
-  | "REFERENC"
-  | `TDIM${number}`
-  | `TDISP${number}`
-  | "TELESCOP"
-  | `TFORM${number}`
-  | `TNULL${number}`
-  | `TTYPE${number}`
-  | `TUNIT${number}`
-  | "XTENSION"
+export type FITSCardString
+  = | "AUTHOR"
+    | "BUNIT"
+    | `CTYPE${number}`
+    | `DATE${string}`
+    | "EXTNAME"
+    | "INSTRUME"
+    | "OBJECT"
+    | "OBSERVER"
+    | "ORIGIN"
+    | `PTYPE${number}`
+    | "REFERENC"
+    | `TDIM${number}`
+    | `TDISP${number}`
+    | "TELESCOP"
+    | `TFORM${number}`
+    | `TNULL${number}`
+    | `TTYPE${number}`
+    | `TUNIT${number}`
+    | "XTENSION"
 const fitsCardStringRegExp = /^AUTHOR|BUNIT|CTYPE\d{1,3}|DATE\S{0,4}|EXTNAME|INSTRUME|OBJECT|OBSERVER|ORIGIN|PTYPE\d{1,3}|REFERENC|TDIM\d{1,3}|TDISP\d{1,3}|TELESCOP|TFORM\d{1,3}|TTYPE\d{1,3}|TUNIT\d{1,3}|XTENSION$/g
 export function isFITSCardString(keyword: string): keyword is FITSCardString {
   return fitsCardStringRegExp.test(keyword)
 }
 
-export type FITSCardLogical =
-  | "BLOCKED"
-  | "EXTEND"
-  | "GROUPS"
-  | "SIMPLE"
+export type FITSCardLogical
+  = | "BLOCKED"
+    | "EXTEND"
+    | "GROUPS"
+    | "SIMPLE"
 const fitsCardLogicalRegExp = /^BLOCKED|EXTEND|GROUPS|SIMPLE$/g
 export function isFITSCardLogical(keyword: string): keyword is FITSCardLogical {
   return fitsCardLogicalRegExp.test(keyword)
@@ -98,7 +100,7 @@ export class FITSHeader {
   public getValues(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>): FITSCardValue[]
   public getValues(keyword: string): FITSCardValue[] {
     keyword = keyword.trim().toUpperCase()
-    if (keyword === "CONTINUE" || keyword === "") {
+    if (keywordIsCommentary(keyword) || keyword === "CONTINUE" || keyword === "END") {
       throw new TypeError(`Cannot retrieve values for "${keyword}" keyword`)
     }
 
@@ -132,9 +134,11 @@ export class FITSHeader {
       if (typeof card.value === "string") {
         let v = card.value
         let i = index
-        while (v.endsWith("&") && this.#cards.at(i + 1)?.keyword === "CONTINUE") {
-          v = v.slice(0, -1) + this.#cards.at(i + 1)!.value
-          i++
+        let next = this.#cards.at(++i)
+        while (v.endsWith("&") && next?.keyword === "CONTINUE") {
+          if (typeof next.value !== "string") throw new TypeError(`Malformed CONTINUE card: ${next.value}`)
+          v = v.slice(0, -1) + next.value
+          next = this.#cards.at(++i)
         }
         values.push(v)
       }
@@ -150,7 +154,7 @@ export class FITSHeader {
    * Returns the value of the first card matching specified header keyword.
    *
    * @param {string} keyword The keyword to retrieve.
-   * @returns {FITSCardValue} The value of the keyword, or `undefined` if the keyword is not present.
+   * @returns {FITSCardValue | undefined} The value of the keyword, or `undefined` if the keyword is not present.
    */
   public getValue(keyword: FITSCardInteger | FITSCardReal): number | undefined
   public getValue(keyword: FITSCardLogical): boolean | undefined
@@ -161,11 +165,11 @@ export class FITSHeader {
   }
 
   /**
-   * Sets the value of the i-th card matching specified header keyword. If the keyword is not present, it will be created.
-   * If the value is `undefined`, the keyword will be removed.
+   * Sets the value of the i-th card matching specified header keyword. If the keyword is not present, it will be
+   * created. If the value is `undefined`, the keyword will be removed.
    *
    * @param {string} keyword The keyword to set.
-   * @param {FITSCardValue} value The value to set.
+   * @param {FITSCardValue | undefined} value The value to set.
    * @param {number} [index=0] The index of the card to set. If the index is out of bounds, the value will be appended.
    * @returns {number} The index of the card that was set.
    */
@@ -174,8 +178,14 @@ export class FITSHeader {
   public setValue(keyword: FITSCardString, value: string | undefined, index: number): number
   public setValue(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue | undefined, index: number): number
   public setValue(keyword: string, value: FITSCardValue | undefined, index: number = 0): number {
-    if (keyword === "SIMPLE" || keyword === "CONTINUE" || keyword === "BITPIX" || keyword.startsWith("NAXIS")) {
-      throw new TypeError(`Cannot set value for "${keyword}" keyword`)
+    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
+      throw new TypeError(`Cannot set value for "${keyword}": value determined by the FITS instance`)
+    }
+    if (keyword === "CONTINUE") {
+      throw new TypeError(`Cannot set value for "${keyword}": value determined by adyacent string`)
+    }
+    if (keywordIsCommentary(keyword) || keyword === "END") {
+      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a value`)
     }
 
     const cards = this.#cards.map((c, i) => [c, i] as const).filter(([card]) => card.keyword === keyword)
@@ -191,12 +201,139 @@ export class FITSHeader {
     while (this.#cards.at(cards[index][1] + n)?.keyword === "CONTINUE") {
       n++
     }
-    this.#cards.splice(cards[index][1], n)
 
-    if (value !== undefined) {
-      this.#cards.splice(cards[index][1], 0, Card.fromValue(keyword, value))
+    const comment = this.getComments(keyword)[index]
+    if (typeof value === "string") {
+      this.#cards.splice(cards[index][1], n, ...Card.buildString(keyword, value, comment))
+    }
+    else if (value !== undefined) {
+      this.#cards.splice(cards[index][1], n, Card.fromValue(keyword, value, comment))
     }
     return index
+  }
+
+  /**
+   * Returns the comments of all the cards matching specified header keyword.
+   *
+   * @param {string} keyword The keyword to retrieve.
+   * @returns {(string | null)[]} The values of the comments. `null` indicates a keyword without a comment.
+   */
+  public getComments(keyword: string): (string | null)[] {
+    keyword = keyword.trim().toUpperCase()
+    if (keyword === "CONTINUE" || keyword === "END") {
+      throw new TypeError(`Cannot retrieve values for "${keyword}" keyword`)
+    }
+
+    const cards = this.#cards.map((c, i) => [c, i] as const).filter(([card]) => card.keyword === keyword)
+
+    const values: (string | null)[] = []
+    for (const [card, index] of cards) {
+      if (typeof card.value === "string") {
+        const c = [card.comment]
+        let v = card.value
+        let i = index
+        let next = this.#cards.at(++i)
+        while (v.endsWith("&") && next?.keyword === "CONTINUE") {
+          if (typeof next.value !== "string") throw new TypeError(`Malformed CONTINUE card: ${next.value}`)
+          v = next.value
+          c.push(next.comment)
+          next = this.#cards.at(++i)
+        }
+        const comment = c.filter(Boolean).join(" ")
+        values.push(comment === "" ? null : comment)
+      }
+      else {
+        values.push(card.comment)
+      }
+    }
+
+    return values
+  }
+
+  /**
+   * Returns the comment of the first cards matching specified header keyword.
+   *
+   * @param {string} keyword The keyword to retrieve.
+   * @returns {string | null | undefined} The value of the comment, `null` if there is a keyword without comment or
+   *                                      `undefined` if the keyword is not present.
+   */
+  public getComment(keyword: string): string | null | undefined {
+    return this.getComments(keyword).at(0)
+  }
+
+  /**
+   * Sets the comment of the i-th card matching specified header keyword. If the keyword is not present, it will throw
+   * a `ReferenceError`. If the value is `null`, the comment will be removed.
+   *
+   * @param {string} keyword The keyword to set.
+   * @param {string | null} comment The comment to set.
+   * @param {number} [index] The index of the card to set the comment. If the index is out of bounds, it will throw a
+   *                         `ReferenceError`.
+   * @returns {number} The index of the card that was set.
+   */
+  public setComment(keyword: string, comment: string | null, index: number = 0): number {
+    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
+      throw new TypeError(`Cannot set value for "${keyword}": comment fixed as per FITS standard`)
+    }
+    if (keyword === "CONTINUE") {
+      throw new TypeError(`Cannot set value for "${keyword}": comment determined by adyacent card`)
+    }
+    if (keyword === "END") {
+      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a comment`)
+    }
+
+    const cards = this.#cards.map((c, i) => [c, i] as const).filter(([card]) => card.keyword === keyword)
+    if (cards.length >= index) {
+      throw new ReferenceError(`Cannot set comment for "${keyword}" index ${index}: no such keyword present`)
+    }
+
+    let n = 1
+    while (this.#cards.at(cards[index][1] + n)?.keyword === "CONTINUE") {
+      n++
+    }
+
+    const value = this.getValues(keyword)[index]
+    if (typeof value === "string") {
+      this.#cards.splice(cards[index][1], n, ...Card.buildString(keyword, value, comment))
+    }
+    else if (value !== undefined) {
+      this.#cards.splice(cards[index][1], n, Card.fromValue(keyword, value, comment))
+    }
+    return index
+  }
+
+  /**
+   * Inserts a new card at the end of the header (excluding END card). If the value is a string, it may create multiple
+   * cards if the string is too long.
+   *
+   * @param {string} keyword The keyword to set.
+   * @param {FITSCardValue} value The value to set.
+   * @param {string | null} comment The comment to set.
+   * @returns {number} The index of the first card that was inserted.
+   */
+  public insert(keyword: FITSCardInteger | FITSCardReal, value: number, comment: string | null): number
+  public insert(keyword: FITSCardLogical, value: boolean, comment: string | null): number
+  public insert(keyword: FITSCardString, value: string, comment: string | null): number
+  public insert(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue, comment: string | null): number
+  public insert(keyword: string, value: FITSCardValue, comment: string | null = null): number {
+    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
+      throw new TypeError(`Cannot set value for "${keyword}": value determined by the FITS instance`)
+    }
+    if (keyword === "CONTINUE") {
+      throw new TypeError(`Cannot set value for "${keyword}": value determined by adyacent string`)
+    }
+    if (keyword === "END") {
+      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a value`)
+    }
+
+    const length = this.#cards.length
+    if (typeof value === "string") {
+      this.#cards.push(...Card.buildString(keyword, value, comment))
+    }
+    else {
+      this.#cards.push(Card.fromValue(keyword, value, comment))
+    }
+    return length
   }
 
   /**
@@ -233,6 +370,9 @@ export class FITSHeader {
     return new FITSHeader(cards)
   }
 
+  /**
+   * Returns the FITS header as a JSON-serializable object.
+   */
   public toJSON(): unknown {
     const map = new Map<string, FITSCardValue[]>()
     for (const card of this.#cards) {
@@ -247,21 +387,40 @@ export class FITSHeader {
   }
 
   /**
+   * Prints the FITS header to the console, adding `\n` between cards.
+   */
+  public prettyPrint(): void {
+    for (const card of this.#cards) {
+      console.log(card.image)
+    }
+  }
+
+  /**
    * Converts the FITS header to an ArrayBuffer.
    */
   public toBuffer(): ArrayBuffer {
-    const cards = [...this.#cards, Card.fromValue("END", null)]
-    const ascii = new TextEncoder()
-    const buffer = new ArrayBuffer(cards.length * Card.LENGTH)
-    const view = new DataView(buffer)
+    const length = Math.ceil((this.#cards.length + 1) * Card.LENGTH / BLOCK_SIZE) * BLOCK_SIZE // +1 for END card
 
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i]
+    const ascii = new TextEncoder()
+    const buffer = new ArrayBuffer(length)
+    const view = new DataView(buffer)
+    let offset = 0
+
+    for (let i = 0; i < this.#cards.length; i++) {
+      const card = this.#cards[i]
       const record = card.image
       const recordBuffer = ascii.encode(record)
       for (let j = 0; j < recordBuffer.byteLength; j++) {
-        view.setUint8(i * Card.LENGTH + j, recordBuffer[j])
+        view.setUint8(offset++, recordBuffer[j])
       }
+    }
+
+    // Fill with spaces
+    while (offset < length - Card.LENGTH) view.setUint8(offset++, 32)
+    // Add END card
+    const endBuffer = ascii.encode(Card.fromValue("END", null).image)
+    for (let i = 0; i < endBuffer.byteLength; i++) {
+      view.setUint8(offset++, endBuffer[i])
     }
 
     return buffer
@@ -288,7 +447,7 @@ export class FITSHeader {
 
       // Parse the record
       const record = ascii.decode(buffer)
-      const card = Card.fromString(record)
+      const card = Card.fromImage(record)
 
       if (card.keyword === "END") {
         break
@@ -336,6 +495,14 @@ export class FITSHeader {
       else if (typeof values[0] !== "number" || !Number.isInteger(values[0]) || values[0] <= 0) {
         throw new TypeError(`Unexpected NAXIS${i} value: ${values[0]}`)
       }
+    }
+
+    const EXTEND = header.getValues("EXTEND")
+    if (EXTEND.length > 1) {
+      throw new Error("Too many EXTEND headers")
+    }
+    else if (EXTEND[0] === true) {
+      throw new Error(`Extended FITS files are not supported`)
     }
 
     return { header, bytesRead: offset }
