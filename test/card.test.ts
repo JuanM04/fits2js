@@ -2,6 +2,73 @@ import { describe, expect, it } from "vitest"
 
 import { Card } from "../src/card"
 
+const VALUE_INDICATOR = "= "
+
+function getImage(card: Card): string {
+  return card.image
+}
+
+function expectFitsBasics(image: string): void {
+  expect(image.length).toBe(Card.LENGTH)
+  expect(/^[\x20-\x7E]{80}$/.test(image)).toBe(true)
+}
+
+function parseCardImage(image: string): {
+  keyword: string
+  indicator: string
+  openQuoteIndex: number
+  closeQuoteIndex: number
+  rawValue: string
+  slashIndex: number
+  comment: string | null
+} {
+  const keyword = image.slice(0, 8).trimEnd()
+  const indicator = image.slice(8, 10)
+  const openQuoteIndex = image.indexOf("'")
+  const slashIndex = image.indexOf(" / ")
+  const quoteSearchEnd = slashIndex === -1 ? image.length : slashIndex
+  const closeQuoteIndex = openQuoteIndex === -1 ? -1 : image.slice(0, quoteSearchEnd).lastIndexOf("'")
+  const rawValue = openQuoteIndex === -1 || closeQuoteIndex === -1
+    ? ""
+    : image.slice(openQuoteIndex + 1, closeQuoteIndex)
+  const comment = slashIndex === -1
+    ? null
+    : image.slice(slashIndex + 3).trimEnd() || null
+
+  return {
+    keyword,
+    indicator,
+    openQuoteIndex,
+    closeQuoteIndex,
+    rawValue,
+    slashIndex,
+    comment,
+  }
+}
+
+function escapeFitsExpected(value: string): string {
+  const normalized = /^ +$/.test(value) ? " " : value.trimEnd()
+  return normalized.replaceAll("'", "''")
+}
+
+function reconstructContinuedString(images: string[]): string {
+  return images
+    .map((image, index) => {
+      const { rawValue } = parseCardImage(image)
+      return index < images.length - 1 ? rawValue.slice(0, -1) : rawValue
+    })
+    .join("")
+}
+
+function reconstructComments(cards: Card[]): string {
+  return cards
+    .map(card => card.comment)
+    .filter((comment): comment is string => typeof comment === "string" && comment.length > 0)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 describe("card.buildString - single-card string+comment cases", () => {
   it("creates a simple string card without comment and pads short strings to length 8", () => {
     const [card] = Card.buildString("KEY", "ABC")
@@ -51,9 +118,8 @@ describe("card.buildString - single-card string+comment cases", () => {
     expect(card.image.length).toBe(Card.LENGTH)
     expect(card.image).toMatchInlineSnapshot(`"SHORT   = 'XYZ' / CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC  "`)
 
-    // In the fixed-value format the comment separator " / " should start at byte 30 (0-based index 30).
-    // FIXED_VALUE_LENGTH is 30, so the separator must be at index 30.
-    expect(card.image.indexOf(" / ")).toBe(30)
+    // The comment no longer fits in fixed-format padding, so it starts right after the closing quote.
+    expect(card.image.indexOf(" / ")).toBe(15)
 
     // Round-trip via fromImage should preserve everything.
     const parsed = Card.fromImage(card.image)
@@ -195,7 +261,7 @@ describe("card.buildString (FITS string cards)", () => {
     it("fits exactly 68 characters inside quotes when value length is 68 (boundary case)", () => {
       const v = "A".repeat(68)
       const [card] = Card.buildString("BOUNDARY", v)
-      const parsed = Card.fromImage(card.image)
+      const parsed = parseCardImage(card.image)
       expect(parsed.rawValue.length).toBe(68)
       // closing quote should land at byte 80 (index 79) in fixed-format case
       expect(parsed.closeQuoteIndex).toBe(79)

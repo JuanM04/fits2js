@@ -668,7 +668,7 @@ exports[`test EFBTCOMP01.fits 1`] = `
       569,
     ],
     "OBJECT": [
-      "",
+      " ",
     ],
     "OBSERVAT": [
       "CASLEO",
@@ -1405,7 +1405,7 @@ exports[`test WCOMP01.fits 1`] = `
       569,
     ],
     "OBJECT": [
-      "",
+      " ",
     ],
     "OBSERVAT": [
       "CASLEO",

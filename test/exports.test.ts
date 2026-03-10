@@ -1,12 +1,19 @@
-import { x } from "tinyexec"
+import { readFile } from "node:fs/promises"
+import { dirname } from "node:path"
 import { describe, expect, it } from "vitest"
 import { getPackageExportsManifest } from "vitest-package-exports"
 import yaml from "yaml"
 
 describe("exports-snapshot", async () => {
-  const packages: { name: string, path: string, private?: boolean }[] = JSON.parse(
-    await x("pnpm", ["ls", "--only-projects", "-r", "--json"]).then(r => r.stdout),
+  const packageUrl = new URL("../package.json", import.meta.url)
+  const packageJson: { name: string, private?: boolean } = JSON.parse(
+    await readFile(packageUrl, "utf8"),
   )
+  const packages = [{
+    name: packageJson.name,
+    path: dirname(packageUrl.pathname),
+    private: packageJson.private,
+  }]
 
   for (const pkg of packages) {
     if (pkg.private)

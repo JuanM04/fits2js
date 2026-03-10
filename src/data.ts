@@ -1,5 +1,14 @@
 export type FITSBITPIX = 8 | 16 | 32 | 64 | -32 | -64
 
+export type FITSNumericTypedArray
+  = | Int8Array
+    | Uint8Array
+    | Int16Array
+    | Uint16Array
+    | Int32Array
+    | Float32Array
+    | Float64Array
+
 export const FITSBITPIX_ALIAS = {
   CHAR: 8,
   UINT8: 8,
@@ -15,6 +24,38 @@ interface FITSDataContructorOptions {
   NAXIS: number
   NAXISn: number[]
   dataBuffer: ArrayBuffer
+}
+
+function getPointCount(axes: number[]): number {
+  if (axes.length === 0) {
+    return 0
+  }
+
+  return axes.reduce((accum, len) => accum * len, 1)
+}
+
+function writePoint(dataView: DataView, offset: number, point: number, BITPIX: FITSBITPIX): void {
+  switch (BITPIX) {
+    case 8:
+      dataView.setUint8(offset, point)
+      break
+    case 16:
+      dataView.setInt16(offset, point, false)
+      break
+    case 32:
+      dataView.setInt32(offset, point, false)
+      break
+    case 64:
+      throw new TypeError("64-bit integers are not supported")
+    case -32:
+      dataView.setFloat32(offset, point, false)
+      break
+    case -64:
+      dataView.setFloat64(offset, point, false)
+      break
+    default:
+      throw new TypeError(`Unexpected BITPIX value ${BITPIX}`)
+  }
 }
 
 export class FITSData {
@@ -67,7 +108,7 @@ export class FITSData {
   #readPoint(offset: number): number {
     switch (this.BITPIX) {
       case 8:
-        return this.#dataView.getInt8(offset)
+        return this.#dataView.getUint8(offset)
       case 16:
         return this.#dataView.getInt16(offset, false)
       case 32:
@@ -168,7 +209,23 @@ export class FITSData {
    * @returns {FITSData} The data of the FITS file.
    */
   public static fromArray(data: number[], BITPIX: FITSBITPIX, axes: number[]): FITSData {
-    const points = axes.reduce((accum, len) => accum * len, 1)
+    return FITSData.fromNumericData(data, BITPIX, axes)
+  }
+
+  /**
+   * Creates a new FITS data unit from a typed array.
+   *
+   * @param {FITSNumericTypedArray} data The data of the FITS file.
+   * @param {BITPIX} BITPIX The bits per pixel of the data.
+   * @param {number[]} axes The axes of the data matrix.
+   * @returns {FITSData} The data of the FITS file.
+   */
+  public static fromTypedArray(data: FITSNumericTypedArray, BITPIX: FITSBITPIX, axes: number[]): FITSData {
+    return FITSData.fromNumericData(data, BITPIX, axes)
+  }
+
+  private static fromNumericData(data: ArrayLike<number>, BITPIX: FITSBITPIX, axes: number[]): FITSData {
+    const points = getPointCount(axes)
     if (data.length !== points) {
       throw new RangeError(`Expected ${points} data points, but got ${data.length}`)
     }
@@ -177,28 +234,8 @@ export class FITSData {
     const dataBuffer = new ArrayBuffer(points * bytesPerPoint)
     const dataView = new DataView(dataBuffer)
     let offset = dataView.byteOffset
-    for (const point of data) {
-      switch (BITPIX) {
-        case 8:
-          dataView.setInt8(offset, point)
-          break
-        case 16:
-          dataView.setInt16(offset, point, false)
-          break
-        case 32:
-          dataView.setInt32(offset, point, false)
-          break
-        case 64:
-          throw new TypeError("64-bit integers are not supported")
-        case -32:
-          dataView.setFloat32(offset, point, false)
-          break
-        case -64:
-          dataView.setFloat64(offset, point, false)
-          break
-        default:
-          throw new TypeError(`Unexpected BITPIX value ${BITPIX}`)
-      }
+    for (let i = 0; i < data.length; i++) {
+      writePoint(dataView, offset, data[i]!, BITPIX)
       offset += bytesPerPoint
     }
 

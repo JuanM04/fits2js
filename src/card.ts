@@ -37,7 +37,7 @@ const valueCommentRegex = new RegExp(
   [
     "^=? *(?:",
     [
-      "'(?<value_str>(?:[\\x20-\\x26\\x28-\\x7E]|'')*?) *'",
+      "'(?<value_str>(?:[\\x20-\\x26\\x28-\\x7E]|'')*)'",
       "(?<value_bool>[FT])",
       `(?<value_real>${numberRegex})`,
       `(?:\\( *(?<value_cplx_r>${numberRegex}) *, *(?<value_cplx_i>${numberRegex}) *\\))`,
@@ -110,6 +110,16 @@ function normalizeFITSString(value: string): string {
  */
 function escapeFITSString(value: string): string {
   return value.replaceAll("'", "''")
+}
+
+/**
+ * Unescape single quotes in a FITS string value.
+ *
+ * @param {string} value The string to unescape.
+ * @returns {string} The unescaped string.
+ */
+function unescapeFITSString(value: string): string {
+  return value.replaceAll("''", "'")
 }
 
 /**
@@ -312,7 +322,7 @@ export class Card {
     if (keywordIsCommentary(keyword)) {
       let comment = valueComment.startsWith(VALUE_INDICATOR) ? valueComment.slice(VALUE_INDICATOR.length) : valueComment
       comment = comment.trim()
-      return new Card(image, keyword, null, comment)
+      return new Card(image, keyword, null, comment === "" ? null : comment)
     }
 
     if (keyword === "END") {
@@ -331,9 +341,9 @@ export class Card {
       throw new Error(`Failed to parse card image \`${image}\``)
     }
 
-    const comment = result.comment ?? null
+    const comment = result.comment?.trimEnd() ?? null
     const value: FITSCardValue = typeof result.value_str === "string"
-      ? result.value_str
+      ? normalizeFITSString(unescapeFITSString(result.value_str))
       : result.value_bool
         ? result.value_bool === "T"
         : result.value_real
@@ -376,7 +386,8 @@ export class Card {
     if (!asciiRegex.test(value)) {
       throw new TypeError(`Invalid value \`${value}\`: must be an ASCII string`)
     }
-    value = escapeFITSString(normalizeFITSString(value))
+    const normalizedValue = normalizeFITSString(value)
+    const escapedValue = escapeFITSString(normalizedValue)
 
     if (comment) {
       if (!asciiRegex.test(comment)) {
@@ -389,16 +400,16 @@ export class Card {
     const SEP_LENGTH = COMMENT_SEPARATOR.length
 
     // Edge-cases for short values
-    if (value.length + (comment ? comment.length + SEP_LENGTH : 0) <= LENGTH_AVAILABLE) {
+    if (escapedValue.length + (comment ? comment.length + SEP_LENGTH : 0) <= LENGTH_AVAILABLE) {
       const commentLength = comment ? comment.length + SEP_LENGTH : 0
       let image = keyword.padEnd(KEYWORD_LENGTH, " ")
       image += VALUE_INDICATOR
-      if (value.length < 8 && 8 + commentLength <= LENGTH_AVAILABLE) {
+      if (escapedValue.length > 0 && escapedValue.length < 8 && 8 + commentLength <= LENGTH_AVAILABLE) {
         // Pad string to length 8 for backwards compatibility
-        image += `'${value.padEnd(8, " ")}'`
+        image += `'${escapedValue.padEnd(8, " ")}'`
       }
       else {
-        image += `'${value}'`
+        image += `'${escapedValue}'`
       }
       if (comment) {
         if (image.length < FIXED_VALUE_LENGTH && commentLength + FIXED_VALUE_LENGTH < CARD_LENGTH) {
@@ -409,7 +420,7 @@ export class Card {
       }
       image = image.padEnd(CARD_LENGTH, " ")
 
-      return [new Card(image, keyword, value.trimEnd(), comment)]
+      return [new Card(image, keyword, normalizedValue, comment)]
     }
 
     // The general case for long strings requiring CONTINUE cards
@@ -432,7 +443,7 @@ export class Card {
     // Since whe split the comment into words, we need to ensure that the longest word can fit in the remaining space
     for (let strLength = LENGTH_AVAILABLE - minimumCommentLength; strLength > 1; strLength--) {
       const cards: Card[] = []
-      let remainingString = value
+      let remainingString = escapedValue
       const remainingComment = [...commentParts]
       while (remainingString.length > 0 || remainingComment.length > 0) {
         let image = ""
@@ -465,14 +476,14 @@ export class Card {
         }
         image = image.padEnd(CARD_LENGTH, " ")
         if (remainingString.length > 0 || remainingComment.length > 0) {
-          cards.push(new Card(image, cardKeyword, str, cardComment))
+          cards.push(new Card(image, cardKeyword, unescapeFITSString(str), cardComment))
         }
         else {
           // Last card -- remove & from end of string
           str = str.slice(0, -1)
           const ampIndex = KEYWORD_LENGTH + VALUE_INDICATOR.length + str.length + 1 // 1 for opening quote
           image = `${image.slice(0, ampIndex)}' ${image.slice(ampIndex + 2)}`
-          cards.push(new Card(image, cardKeyword, str, cardComment))
+          cards.push(new Card(image, cardKeyword, unescapeFITSString(str), cardComment))
         }
       }
       const emptyStrings = cards.filter(c => c.value === "").length

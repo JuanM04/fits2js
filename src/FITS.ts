@@ -1,4 +1,4 @@
-import type { FITSBITPIX } from "./data.js"
+import type { FITSBITPIX, FITSNumericTypedArray } from "./data.js"
 import { FITSData } from "./data.js"
 import { FITSHeader } from "./header.js"
 
@@ -112,6 +112,22 @@ export class FITS {
   static fromDataArray(points: number[], BITPIX: FITSBITPIX, axes: number[], copyHeader?: FITSHeader): FITS {
     const header = copyHeader ? copyHeader.copyWith(BITPIX, axes) : FITSHeader.basic(BITPIX, axes)
     const data = FITSData.fromArray(points, BITPIX, axes)
+
+    return new FITS(header, data)
+  }
+
+  /**
+   * Creates a new FITS file from a typed array.
+   *
+   * @param {FITSNumericTypedArray} points The typed array points of the FITS file.
+   * @param {BITPIX | FITSBITPIXAlias} BITPIX The bits per point of the data.
+   * @param {number[]} axes The axes of the data matrix.
+   * @param {FITSHeader} [copyHeader] The header to copy from.
+   * @returns {FITS} The header and data of the FITS file.
+   */
+  static fromTypedArray(points: FITSNumericTypedArray, BITPIX: FITSBITPIX, axes: number[], copyHeader?: FITSHeader): FITS {
+    const header = copyHeader ? copyHeader.copyWith(BITPIX, axes) : FITSHeader.basic(BITPIX, axes)
+    const data = FITSData.fromTypedArray(points, BITPIX, axes)
 
     return new FITS(header, data)
   }

@@ -21,7 +21,7 @@ export type FITSCardInteger
     | `TBCOL${number}`
     | "TFIELDS"
     | "THEAP"
-const fitsCardIntegerRegExp = /^BITPIX|BLANK|EXTLEVEL|EXTVER|GCOUNT|NAXIS\d{0,3}|PCOUNT|TBCOL\d{1,3}|TFIELDS|THEAP$/g
+const fitsCardIntegerRegExp = /^(?:BITPIX|BLANK|EXTLEVEL|EXTVER|GCOUNT|NAXIS\d{0,3}|PCOUNT|TBCOL\d{1,3}|TFIELDS|THEAP)$/
 export function isFITSCardInteger(keyword: string): keyword is FITSCardInteger {
   return fitsCardIntegerRegExp.test(keyword)
 }
@@ -41,7 +41,7 @@ export type FITSCardReal
     | `PZERO${number}`
     | `TSCAL${number}`
     | `TZERO${number}`
-const fitsCardRealRegExp = /^BSCALE|BZERO|CDELT\d{1,3}|CROTA\d{1,3}|CRPIX\d{1,3}|CRVAL\d{1,3}|DATAMAX|DATAMIN|EPOCH|EQUINOX|PSCAL\d{1,3}|PZERO\d{1,3}|TSCAL\d{1,3}|TZERO\d{1,3}$/g
+const fitsCardRealRegExp = /^(?:BSCALE|BZERO|CDELT\d{1,3}|CROTA\d{1,3}|CRPIX\d{1,3}|CRVAL\d{1,3}|DATAMAX|DATAMIN|EPOCH|EQUINOX|PSCAL\d{1,3}|PZERO\d{1,3}|TSCAL\d{1,3}|TZERO\d{1,3})$/
 export function isFITSCardReal(keyword: string): keyword is FITSCardReal {
   return fitsCardRealRegExp.test(keyword)
 }
@@ -66,7 +66,7 @@ export type FITSCardString
     | `TTYPE${number}`
     | `TUNIT${number}`
     | "XTENSION"
-const fitsCardStringRegExp = /^AUTHOR|BUNIT|CTYPE\d{1,3}|DATE\S{0,4}|EXTNAME|INSTRUME|OBJECT|OBSERVER|ORIGIN|PTYPE\d{1,3}|REFERENC|TDIM\d{1,3}|TDISP\d{1,3}|TELESCOP|TFORM\d{1,3}|TTYPE\d{1,3}|TUNIT\d{1,3}|XTENSION$/g
+const fitsCardStringRegExp = /^(?:AUTHOR|BUNIT|CTYPE\d{1,3}|DATE\S{0,4}|EXTNAME|INSTRUME|OBJECT|OBSERVER|ORIGIN|PTYPE\d{1,3}|REFERENC|TDIM\d{1,3}|TDISP\d{1,3}|TELESCOP|TFORM\d{1,3}|TTYPE\d{1,3}|TUNIT\d{1,3}|XTENSION)$/
 export function isFITSCardString(keyword: string): keyword is FITSCardString {
   return fitsCardStringRegExp.test(keyword)
 }
@@ -76,9 +76,23 @@ export type FITSCardLogical
     | "EXTEND"
     | "GROUPS"
     | "SIMPLE"
-const fitsCardLogicalRegExp = /^BLOCKED|EXTEND|GROUPS|SIMPLE$/g
+const fitsCardLogicalRegExp = /^(?:BLOCKED|EXTEND|GROUPS|SIMPLE)$/
 export function isFITSCardLogical(keyword: string): keyword is FITSCardLogical {
   return fitsCardLogicalRegExp.test(keyword)
+}
+
+export interface FITSHeaderSetOptions {
+  comment?: string | null
+  index?: number
+}
+
+export interface FITSHeaderAxisOptions {
+  ctype?: string
+  cunit?: string
+  crpix?: number
+  crval?: number
+  cdelt?: number
+  crota?: number
 }
 
 export class FITSHeader {
@@ -86,6 +100,128 @@ export class FITSHeader {
 
   private constructor(cards: Card[]) {
     this.#cards = cards
+  }
+
+  #getMandatoryCardCount(): number {
+    let count = 0
+    if (this.#cards[count]?.keyword === "SIMPLE") {
+      count++
+    }
+    if (this.#cards[count]?.keyword === "BITPIX") {
+      count++
+    }
+
+    const naxisCard = this.#cards[count]
+    if (naxisCard?.keyword === "NAXIS"
+      && typeof naxisCard.value === "number"
+      && Number.isInteger(naxisCard.value)
+      && naxisCard.value >= 0) {
+      count++
+      for (let axis = 1; axis <= naxisCard.value; axis++) {
+        if (this.#cards[count]?.keyword === `NAXIS${axis}`) {
+          count++
+        }
+        else {
+          break
+        }
+      }
+    }
+
+    return count
+  }
+
+  #getMutableEntryStartIndices(): number[] {
+    const starts: number[] = []
+    for (let i = this.#getMandatoryCardCount(); i < this.#cards.length; i++) {
+      if (this.#cards[i]!.keyword === "CONTINUE") {
+        continue
+      }
+
+      starts.push(i)
+    }
+
+    return starts
+  }
+
+  #getMutableEntryCount(): number {
+    return this.#getMutableEntryStartIndices().length
+  }
+
+  #getMutableInsertIndex(index: number): number {
+    const starts = this.#getMutableEntryStartIndices()
+    if (index <= 0) {
+      return this.#getMandatoryCardCount()
+    }
+    if (index >= starts.length) {
+      return this.#cards.length
+    }
+
+    return starts[index]!
+  }
+
+  #getCardBlocks(keyword: string): Array<{ cardIndex: number, length: number }> {
+    const blocks: Array<{ cardIndex: number, length: number }> = []
+
+    for (let i = 0; i < this.#cards.length; i++) {
+      if (this.#cards[i]!.keyword !== keyword) {
+        continue
+      }
+
+      let length = 1
+      while (this.#cards[i + length]?.keyword === "CONTINUE") {
+        length++
+      }
+
+      blocks.push({ cardIndex: i, length })
+      i += length - 1
+    }
+
+    return blocks
+  }
+
+  #getReplacementCards(keyword: string, value: FITSCardValue, comment: string | null): Card[] {
+    return typeof value === "string"
+      ? Card.buildString(keyword, value, comment)
+      : [Card.fromValue(keyword, value, comment)]
+  }
+
+  #assertWritableValueKeyword(keyword: string): void {
+    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
+      throw new TypeError(`Cannot set value for "${keyword}": value determined by the FITS instance`)
+    }
+    if (keyword === "CONTINUE") {
+      throw new TypeError(`Cannot set value for "${keyword}": value determined by adyacent string`)
+    }
+    if (keywordIsCommentary(keyword) || keyword === "END") {
+      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a value`)
+    }
+  }
+
+  #assertWritableCommentKeyword(keyword: string): void {
+    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
+      throw new TypeError(`Cannot set value for "${keyword}": comment fixed as per FITS standard`)
+    }
+    if (keyword === "CONTINUE") {
+      throw new TypeError(`Cannot set value for "${keyword}": comment determined by adyacent card`)
+    }
+    if (keyword === "END") {
+      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a comment`)
+    }
+  }
+
+  #assertRemovableKeyword(keyword: string): void {
+    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
+      throw new TypeError(`Cannot remove "${keyword}": keyword determined by the FITS instance`)
+    }
+    if (keyword === "CONTINUE" || keyword === "END") {
+      throw new TypeError(`Cannot remove "${keyword}" directly`)
+    }
+  }
+
+  #insertCommentaryAt(index: number, keyword: "" | "COMMENT" | "HISTORY", comment: string | null): number {
+    const cardIndex = this.#getMutableInsertIndex(index)
+    this.#cards.splice(cardIndex, 0, Card.fromValue(keyword, null, comment))
+    return Math.max(0, Math.min(index, this.#getMutableEntryCount() - 1))
   }
 
   /**
@@ -178,38 +314,7 @@ export class FITSHeader {
   public setValue(keyword: FITSCardString, value: string | undefined, index: number): number
   public setValue(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue | undefined, index: number): number
   public setValue(keyword: string, value: FITSCardValue | undefined, index: number = 0): number {
-    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
-      throw new TypeError(`Cannot set value for "${keyword}": value determined by the FITS instance`)
-    }
-    if (keyword === "CONTINUE") {
-      throw new TypeError(`Cannot set value for "${keyword}": value determined by adyacent string`)
-    }
-    if (keywordIsCommentary(keyword) || keyword === "END") {
-      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a value`)
-    }
-
-    const cards = this.#cards.map((c, i) => [c, i] as const).filter(([card]) => card.keyword === keyword)
-    if (cards.length >= index) {
-      if (value !== undefined) {
-        this.#cards.push(Card.fromValue(keyword, value))
-        return this.#cards.length - 1
-      }
-      return -1 // No card to remove
-    }
-
-    let n = 1
-    while (this.#cards.at(cards[index][1] + n)?.keyword === "CONTINUE") {
-      n++
-    }
-
-    const comment = this.getComments(keyword)[index]
-    if (typeof value === "string") {
-      this.#cards.splice(cards[index][1], n, ...Card.buildString(keyword, value, comment))
-    }
-    else if (value !== undefined) {
-      this.#cards.splice(cards[index][1], n, Card.fromValue(keyword, value, comment))
-    }
-    return index
+    return this.set(keyword, value, { index })
   }
 
   /**
@@ -272,68 +377,163 @@ export class FITSHeader {
    * @returns {number} The index of the card that was set.
    */
   public setComment(keyword: string, comment: string | null, index: number = 0): number {
-    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
-      throw new TypeError(`Cannot set value for "${keyword}": comment fixed as per FITS standard`)
-    }
-    if (keyword === "CONTINUE") {
-      throw new TypeError(`Cannot set value for "${keyword}": comment determined by adyacent card`)
-    }
-    if (keyword === "END") {
-      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a comment`)
-    }
+    keyword = keyword.trimEnd()
+    this.#assertWritableCommentKeyword(keyword)
 
-    const cards = this.#cards.map((c, i) => [c, i] as const).filter(([card]) => card.keyword === keyword)
-    if (cards.length >= index) {
+    const blocks = this.#getCardBlocks(keyword)
+    if (blocks.length <= index) {
       throw new ReferenceError(`Cannot set comment for "${keyword}" index ${index}: no such keyword present`)
     }
 
-    let n = 1
-    while (this.#cards.at(cards[index][1] + n)?.keyword === "CONTINUE") {
-      n++
-    }
+    const { cardIndex, length } = blocks[index]!
+    const value = keywordIsCommentary(keyword)
+      ? null
+      : this.getValues(keyword)[index]!
 
-    const value = this.getValues(keyword)[index]
-    if (typeof value === "string") {
-      this.#cards.splice(cards[index][1], n, ...Card.buildString(keyword, value, comment))
-    }
-    else if (value !== undefined) {
-      this.#cards.splice(cards[index][1], n, Card.fromValue(keyword, value, comment))
-    }
+    this.#cards.splice(cardIndex, length, ...this.#getReplacementCards(keyword, value, comment))
     return index
   }
 
   /**
-   * Inserts a new card at the end of the header (excluding END card). If the value is a string, it may create multiple
-   * cards if the string is too long.
-   *
-   * @param {string} keyword The keyword to set.
-   * @param {FITSCardValue} value The value to set.
-   * @param {string | null} comment The comment to set.
-   * @returns {number} The index of the first card that was inserted.
+   * Sets the value and optional comment of the i-th card matching the specified header keyword.
+   * If the keyword is not present, it will be appended. If the value is `undefined`, the keyword will be removed.
    */
-  public insert(keyword: FITSCardInteger | FITSCardReal, value: number, comment: string | null): number
-  public insert(keyword: FITSCardLogical, value: boolean, comment: string | null): number
-  public insert(keyword: FITSCardString, value: string, comment: string | null): number
-  public insert(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue, comment: string | null): number
-  public insert(keyword: string, value: FITSCardValue, comment: string | null = null): number {
-    if (keyword === "SIMPLE" || keyword === "BITPIX" || keyword.startsWith("NAXIS") || keyword === "EXTEND") {
-      throw new TypeError(`Cannot set value for "${keyword}": value determined by the FITS instance`)
-    }
-    if (keyword === "CONTINUE") {
-      throw new TypeError(`Cannot set value for "${keyword}": value determined by adyacent string`)
-    }
-    if (keyword === "END") {
-      throw new TypeError(`Cannot set value for "${keyword}": keyword cannot have a value`)
+  public set(keyword: FITSCardInteger | FITSCardReal, value: number | undefined, options?: FITSHeaderSetOptions): number
+  public set(keyword: FITSCardLogical, value: boolean | undefined, options?: FITSHeaderSetOptions): number
+  public set(keyword: FITSCardString, value: string | undefined, options?: FITSHeaderSetOptions): number
+  public set(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue | undefined, options?: FITSHeaderSetOptions): number
+  public set(keyword: string, value: FITSCardValue | undefined, options: FITSHeaderSetOptions = {}): number {
+    keyword = keyword.trimEnd()
+    this.#assertWritableValueKeyword(keyword)
+
+    const index = options.index ?? 0
+    if (value === undefined) {
+      return this.remove(keyword, index) ? index : -1
     }
 
-    const length = this.#cards.length
-    if (typeof value === "string") {
-      this.#cards.push(...Card.buildString(keyword, value, comment))
+    const blocks = this.#getCardBlocks(keyword)
+    const comment = options.comment === undefined
+      ? this.getComments(keyword)[index] ?? null
+      : options.comment
+
+    if (blocks.length <= index) {
+      return this.append(keyword, value, comment)
     }
-    else {
-      this.#cards.push(Card.fromValue(keyword, value, comment))
+
+    const { cardIndex, length } = blocks[index]!
+    this.#cards.splice(cardIndex, length, ...this.#getReplacementCards(keyword, value, comment))
+    return index
+  }
+
+  /**
+   * Appends a new card after the existing user-defined cards.
+   *
+   * @param {string} keyword The keyword to append.
+   * @param {FITSCardValue} value The value to append.
+   * @param {string | null} comment The comment to append.
+   * @returns {number} The logical header entry index where the card was inserted.
+   */
+  public append(keyword: FITSCardInteger | FITSCardReal, value: number, comment?: string | null): number
+  public append(keyword: FITSCardLogical, value: boolean, comment?: string | null): number
+  public append(keyword: FITSCardString, value: string, comment?: string | null): number
+  public append(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue, comment?: string | null): number
+  public append(keyword: string, value: FITSCardValue, comment: string | null = null): number {
+    return this.insertAt(this.#getMutableEntryCount(), keyword, value, comment)
+  }
+
+  /**
+   * Inserts a new card at the specified user-defined header position.
+   *
+   * Mandatory FITS cards remain pinned at the top of the header.
+   */
+  public insertAt(index: number, keyword: FITSCardInteger | FITSCardReal, value: number, comment?: string | null): number
+  public insertAt(index: number, keyword: FITSCardLogical, value: boolean, comment?: string | null): number
+  public insertAt(index: number, keyword: FITSCardString, value: string, comment?: string | null): number
+  public insertAt(index: number, keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue, comment?: string | null): number
+  public insertAt(index: number, keyword: string, value: FITSCardValue, comment: string | null = null): number {
+    keyword = keyword.trimEnd()
+    this.#assertWritableValueKeyword(keyword)
+
+    const cardIndex = this.#getMutableInsertIndex(index)
+    this.#cards.splice(cardIndex, 0, ...this.#getReplacementCards(keyword, value, comment))
+    return Math.max(0, Math.min(index, this.#getMutableEntryCount() - 1))
+  }
+
+  /**
+   * Inserts a new card at the end of the header (excluding END card).
+   */
+  public insert(keyword: FITSCardInteger | FITSCardReal, value: number, comment?: string | null): number
+  public insert(keyword: FITSCardLogical, value: boolean, comment?: string | null): number
+  public insert(keyword: FITSCardString, value: string, comment?: string | null): number
+  public insert(keyword: Exclude<string, FITSCardInteger | FITSCardReal | FITSCardLogical | FITSCardString>, value: FITSCardValue, comment?: string | null): number
+  public insert(keyword: string, value: FITSCardValue, comment: string | null = null): number {
+    return this.append(keyword, value, comment)
+  }
+
+  /**
+   * Removes the i-th card matching specified header keyword.
+   */
+  public remove(keyword: string, index: number = 0): boolean {
+    keyword = keyword.trimEnd()
+    this.#assertRemovableKeyword(keyword)
+
+    const blocks = this.#getCardBlocks(keyword)
+    if (blocks.length <= index) {
+      return false
     }
-    return length
+
+    const { cardIndex, length } = blocks[index]!
+    this.#cards.splice(cardIndex, length)
+    return true
+  }
+
+  /**
+   * Appends a blank keyword record, optionally containing a comment-only separator text.
+   */
+  public appendBlank(comment: string | null = null): number {
+    return this.#insertCommentaryAt(this.#getMutableEntryCount(), "", comment)
+  }
+
+  /**
+   * Appends a COMMENT card.
+   */
+  public appendComment(text: string): number {
+    return this.#insertCommentaryAt(this.#getMutableEntryCount(), "COMMENT", text)
+  }
+
+  /**
+   * Appends a HISTORY card.
+   */
+  public appendHistory(text: string): number {
+    return this.#insertCommentaryAt(this.#getMutableEntryCount(), "HISTORY", text)
+  }
+
+  /**
+   * Adds convenience WCS-like axis metadata for the specified axis number.
+   */
+  public addAxis(n: number, axis: FITSHeaderAxisOptions): void {
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new RangeError(`Expected a positive axis number, but got ${n}`)
+    }
+
+    if (axis.ctype !== undefined) {
+      this.set(`CTYPE${n}`, axis.ctype)
+    }
+    if (axis.cunit !== undefined) {
+      this.set(`CUNIT${n}`, axis.cunit)
+    }
+    if (axis.crpix !== undefined) {
+      this.set(`CRPIX${n}`, axis.crpix)
+    }
+    if (axis.crval !== undefined) {
+      this.set(`CRVAL${n}`, axis.crval)
+    }
+    if (axis.cdelt !== undefined) {
+      this.set(`CDELT${n}`, axis.cdelt)
+    }
+    if (axis.crota !== undefined) {
+      this.set(`CROTA${n}`, axis.crota)
+    }
   }
 
   /**
@@ -376,11 +576,12 @@ export class FITSHeader {
   public toJSON(): unknown {
     const map = new Map<string, FITSCardValue[]>()
     for (const card of this.#cards) {
+      const value = card.isCommentary ? card.comment : card.value
       if (!map.has(card.keyword)) {
-        map.set(card.keyword, [card.value])
+        map.set(card.keyword, [value])
       }
       else {
-        map.get(card.keyword)!.push(card.value)
+        map.get(card.keyword)!.push(value)
       }
     }
     return Object.fromEntries(map)
